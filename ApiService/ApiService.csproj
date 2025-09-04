@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="MariApps.Framework.MS.Core" Version="10.0.100.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
   </ItemGroup>
 
    <ItemGroup>

@@ -1,4 +1,6 @@
 ﻿using MariApps.Framework.Core.Abstractions.Contracts;
+using MariApps.MS.Training.MSA.EmployeeMS.Business;
+using MariApps.MS.Training.MSA.EmployeeMS.Business.Contracts;
 using MariApps.MS.Training.MSA.EmployeeMS.Repository.Contracts.DbContext;
 using MariApps.MS.Training.MSA.EmployeeMS.Repository.Contracts.Repositories;
 using MariApps.MS.Training.MSA.EmployeeMS.Repository.DbContext;
@@ -26,6 +28,27 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Extensions
             });
 
             services.AddScoped<ISampleRepository, SampleRepository>();
+
+            services.AddScoped<IEmployeeRepository, EmployeeRepository>(provider =>
+            {
+                IConfiguration configuration = provider.GetRequiredService<IConfiguration>();
+                string? palConnectionString = configuration.GetConnectionString("PALConnectionString");
+                if (string.IsNullOrEmpty(palConnectionString))
+                    throw new ArgumentNullException("Connection string not found");
+                return new EmployeeRepository(palConnectionString);
+            });
+
+            services.AddScoped<IEmployeeService, EmployeeService>();
+
+            services.AddScoped<IUserAuthRepository, UserAuthRepository>(provider =>
+            {
+                IConfiguration configuration = provider.GetRequiredService<IConfiguration>();
+                string? palConnectionString = configuration.GetConnectionString("PALConnectionString");
+                if (string.IsNullOrEmpty(palConnectionString))
+                    throw new ArgumentNullException("Connection string not found");
+                return new UserAuthRepository(palConnectionString);
+            });
+            services.AddScoped<IAuthService, AuthService>();
         }
     }
 }

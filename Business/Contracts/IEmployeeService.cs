@@ -14,6 +14,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Business.Contracts
         void AddEmployee(EmployeePersonalEntity employeePersonal, EmployeeProfessionalEntity employeeProfessional);
         void UpdateEmployee(EmployeePersonalEntity employeePersonal, EmployeeProfessionalEntity employeeProfessional);
         void DeleteEmployee(int employeeId);
+        void UpdateEmployeeImageUrl(int employeeId, string profileImageUrl);
 
         // Add other business logic methods as needed
 
