@@ -19,7 +19,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Filters
 			var role = context.HttpContext.Request.Headers["X-Role"].FirstOrDefault();
 			if (string.IsNullOrWhiteSpace(role) || (_allowedRoles.Count > 0 && !_allowedRoles.Contains(role)))
 			{
-				context.Result = new ForbidResult();
+				context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
 				return;
 			}
 

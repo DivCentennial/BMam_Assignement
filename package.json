@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@angular/animations": "^20.2.4",
+    "@angular/cdk": "^20.2.2",
+    "@angular/forms": "^20.2.4",
+    "@angular/material": "^20.2.2",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "file-saver": "^2.0.5",
+    "xlsx": "^0.18.5"
+  }
+}

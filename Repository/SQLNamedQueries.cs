@@ -19,5 +19,11 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository
 
         public const string SpGetUserByUsername = "sp_GetUserByUsername";
 
+        public static string WithSchema(this string procName, string schema)
+        {
+            if (string.IsNullOrWhiteSpace(schema)) schema = "dbo";
+            return $"[{schema}].{procName}";
+        }
+
     }
 }

@@ -33,9 +33,11 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Extensions
             {
                 IConfiguration configuration = provider.GetRequiredService<IConfiguration>();
                 string? palConnectionString = configuration.GetConnectionString("PALConnectionString");
+                string schema = configuration.GetValue<string>("DbSchema") ?? "dbo";
+                string procSchema = configuration.GetValue<string>("ProcSchema") ?? schema;
                 if (string.IsNullOrEmpty(palConnectionString))
                     throw new ArgumentNullException("Connection string not found");
-                return new EmployeeRepository(palConnectionString);
+                return new EmployeeRepository(palConnectionString, schema, procSchema);
             });
 
             services.AddScoped<IEmployeeService, EmployeeService>();
@@ -44,9 +46,10 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Extensions
             {
                 IConfiguration configuration = provider.GetRequiredService<IConfiguration>();
                 string? palConnectionString = configuration.GetConnectionString("PALConnectionString");
+                string schema = configuration.GetValue<string>("DbSchema") ?? "dbo";
                 if (string.IsNullOrEmpty(palConnectionString))
                     throw new ArgumentNullException("Connection string not found");
-                return new UserAuthRepository(palConnectionString);
+                return new UserAuthRepository(palConnectionString, schema);
             });
             services.AddScoped<IAuthService, AuthService>();
         }

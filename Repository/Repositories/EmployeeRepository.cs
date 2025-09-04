@@ -14,10 +14,14 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
        public class EmployeeRepository : IEmployeeRepository
     {
         private readonly string _connectionString;
+        private readonly string _schemaName;
+        private readonly string _procSchema;
 
-        public EmployeeRepository(string connectionString)
+        public EmployeeRepository(string connectionString, string schemaName = "dbo", string procSchema = "dbo")
         {
             _connectionString = connectionString;
+            _schemaName = string.IsNullOrWhiteSpace(schemaName) ? "dbo" : schemaName;
+            _procSchema = string.IsNullOrWhiteSpace(procSchema) ? "dbo" : procSchema;
         }
 
         public List<EmployeePersonalDT> GetAllEmployees()
@@ -25,7 +29,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
             var employees = new List<EmployeePersonalDT>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetAllEmployees, conn);
+                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetAllEmployees.WithSchema(_procSchema), conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
                 conn.Open();
@@ -56,7 +60,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetEmployeeById, conn)
+                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetEmployeeById.WithSchema(_procSchema), conn)
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -94,7 +98,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                 {
                     try
                     {
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeePersonal, conn, tx))
+                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeePersonal.WithSchema(_procSchema), conn, tx))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", personal.EmployeeId);
@@ -118,7 +122,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                             cmd.ExecuteNonQuery();
                         }
 
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeeProfessional, conn, tx))
+                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeeProfessional.WithSchema(_procSchema), conn, tx))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", professional.EmployeeId);
@@ -159,7 +163,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                 {
                     try
                     {
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeePersonal, conn, tx))
+                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeePersonal.WithSchema(_procSchema), conn, tx))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", personal.EmployeeId);
@@ -183,7 +187,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                             cmd.ExecuteNonQuery();
                         }
 
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeProfessional, conn, tx))
+                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeProfessional.WithSchema(_procSchema), conn, tx))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", professional.EmployeeId);
@@ -218,7 +222,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
         public void DeleteEmployee(int employeeId)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpDeleteEmployee, conn))
+            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpDeleteEmployee.WithSchema(_procSchema), conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
@@ -230,7 +234,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
         public void UpdateEmployeeImageUrl(int employeeId, string profileImageUrl)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeImageUrl, conn))
+            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeImageUrl.WithSchema(_procSchema), conn))
             {
                 cmd.CommandType = CommandType.StoredProcedure;
                 cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
