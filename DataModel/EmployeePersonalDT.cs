@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MariApps.MS.Training.MSA.EmployeeMS.DataModel
 {
-    public class EmployeePersonal
+    public class EmployeePersonalDT
     {
 
         public int EmployeeId { get; set; }
