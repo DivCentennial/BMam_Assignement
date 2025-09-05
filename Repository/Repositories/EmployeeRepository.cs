@@ -29,65 +29,73 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
             var employees = new List<EmployeePersonalDT>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetAllEmployees.WithSchema(_procSchema), conn);
-                cmd.CommandType = CommandType.StoredProcedure;
+                string query = $"SELECT EmployeeId, FullName, Gender, DOB, Age, Address, ContactNo, Email, ProfileImageUrl FROM [{_schemaName}].[EmployeePersonal]";
 
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    while (reader.Read())
+                    cmd.CommandType = CommandType.Text;
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        employees.Add(new EmployeePersonalDT
+                        while (reader.Read())
                         {
-                            EmployeeId = reader.GetInt32(0),
-                            FullName = reader.GetString(1),
-                            Gender = reader.GetString(2)[0],
-                            DOB = reader.GetDateTime(3),
-                            Age = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
-                            Address = reader.IsDBNull(5) ? null : reader.GetString(5),
-                            ContactNo = reader.GetString(6),
-                            Email = reader.GetString(7),
-                            ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
-                        });
+                            employees.Add(new EmployeePersonalDT
+                            {
+                                EmployeeId = reader.GetInt32(0),
+                                FullName = reader.GetString(1),
+                                Gender = reader.GetString(2)[0],
+                                DOB = reader.GetDateTime(3),
+                                Age = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
+                                Address = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                ContactNo = reader.GetString(6),
+                                Email = reader.GetString(7),
+                                ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
+                            });
+                        }
                     }
                 }
             }
             return employees;
         }
 
-        // Implement other methods similarly...
+
+
         public EmployeePersonalDT GetEmployeeById(int employeeId)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpGetEmployeeById.WithSchema(_procSchema), conn)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                // Direct SQL query instead of stored procedure
+                string sql = $"SELECT * FROM [{_schemaName}].[EmployeePersonal] WHERE EmployeeId = @EmployeeId";
 
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    if (reader.Read())
+                    cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        return new EmployeePersonalDT
+                        if (reader.Read())
                         {
-                            EmployeeId = reader.GetInt32(0),
-                            FullName = reader.GetString(1),
-                            Gender = reader.GetString(2)[0],
-                            DOB = reader.GetDateTime(3),
-                            Age = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
-                            Address = reader.IsDBNull(5) ? null : reader.GetString(5),
-                            ContactNo = reader.GetString(6),
-                            Email = reader.GetString(7),
-                            ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
-                        };
+                            return new EmployeePersonalDT
+                            {
+                                EmployeeId = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                FullName = reader.GetString(reader.GetOrdinal("FullName")),
+                                Gender = reader.GetString(reader.GetOrdinal("Gender"))[0],
+                                DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                                Age = reader.IsDBNull(reader.GetOrdinal("Age")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Age")),
+                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
+                                ContactNo = reader.GetString(reader.GetOrdinal("ContactNo")),
+                                Email = reader.GetString(reader.GetOrdinal("Email")),
+                                ProfileImageUrl = reader.IsDBNull(reader.GetOrdinal("ProfileImageUrl")) ? null : reader.GetString(reader.GetOrdinal("ProfileImageUrl"))
+                            };
+                        }
                     }
                 }
             }
+
             return null;
         }
+
 
         public void AddEmployee(EmployeePersonalDT personal, EmployeeProfessionalDT professional)
         {
@@ -98,48 +106,44 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                 {
                     try
                     {
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeePersonal.WithSchema(_procSchema), conn, tx))
+                        // Insert into EmployeePersonal table
+                        string personalSql = $@"
+                    INSERT INTO [{_schemaName}].[EmployeePersonal] 
+                    (EmployeeId, FullName, Gender, DOB, Age, Address, ContactNo, Email, ProfileImageUrl)
+                    VALUES
+                    (@EmployeeId, @FullName, @Gender, @DOB, @Age, @Address, @ContactNo, @Email, @ProfileImageUrl)";
+
+                        using (SqlCommand cmd = new SqlCommand(personalSql, conn, tx))
                         {
-                            cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", personal.EmployeeId);
                             cmd.Parameters.AddWithValue("@FullName", personal.FullName);
                             cmd.Parameters.AddWithValue("@Gender", personal.Gender);
                             cmd.Parameters.AddWithValue("@DOB", personal.DOB);
-                            if (personal.Age.HasValue)
-                                cmd.Parameters.AddWithValue("@Age", personal.Age.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Age", DBNull.Value);
-                            if (string.IsNullOrEmpty(personal.Address))
-                                cmd.Parameters.AddWithValue("@Address", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Address", personal.Address);
+                            cmd.Parameters.AddWithValue("@Age", personal.Age.HasValue ? (object)personal.Age.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Address", string.IsNullOrEmpty(personal.Address) ? DBNull.Value : (object)personal.Address);
                             cmd.Parameters.AddWithValue("@ContactNo", personal.ContactNo);
                             cmd.Parameters.AddWithValue("@Email", personal.Email);
-                            if (string.IsNullOrEmpty(personal.ProfileImageUrl))
-                                cmd.Parameters.AddWithValue("@ProfileImageUrl", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@ProfileImageUrl", personal.ProfileImageUrl);
+                            cmd.Parameters.AddWithValue("@ProfileImageUrl", string.IsNullOrEmpty(personal.ProfileImageUrl) ? DBNull.Value : (object)personal.ProfileImageUrl);
+
                             cmd.ExecuteNonQuery();
                         }
 
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpAddEmployeeProfessional.WithSchema(_procSchema), conn, tx))
+                        // Insert into EmployeeProfessional table
+                        string professionalSql = $@"
+                    INSERT INTO [{_schemaName}].[EmployeeProfessional] 
+                    (EmployeeId, Designation, Department, Qualification, Experience, Skill)
+                    VALUES
+                    (@EmployeeId, @Designation, @Department, @Qualification, @Experience, @Skill)";
+
+                        using (SqlCommand cmd = new SqlCommand(professionalSql, conn, tx))
                         {
-                            cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", professional.EmployeeId);
                             cmd.Parameters.AddWithValue("@Designation", professional.Designation);
                             cmd.Parameters.AddWithValue("@Department", professional.Department);
-                            if (string.IsNullOrEmpty(professional.Qualification))
-                                cmd.Parameters.AddWithValue("@Qualification", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Qualification", professional.Qualification);
-                            if (professional.Experience.HasValue)
-                                cmd.Parameters.AddWithValue("@Experience", professional.Experience.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Experience", DBNull.Value);
-                            if (string.IsNullOrEmpty(professional.Skill))
-                                cmd.Parameters.AddWithValue("@Skill", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Skill", professional.Skill);
+                            cmd.Parameters.AddWithValue("@Qualification", string.IsNullOrEmpty(professional.Qualification) ? DBNull.Value : (object)professional.Qualification);
+                            cmd.Parameters.AddWithValue("@Experience", professional.Experience.HasValue ? (object)professional.Experience.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Skill", string.IsNullOrEmpty(professional.Skill) ? DBNull.Value : (object)professional.Skill);
+
                             cmd.ExecuteNonQuery();
                         }
 
@@ -154,6 +158,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
             }
         }
 
+
         public void UpdateEmployee(EmployeePersonalDT personal, EmployeeProfessionalDT professional)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
@@ -163,48 +168,53 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                 {
                     try
                     {
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeePersonal.WithSchema(_procSchema), conn, tx))
+                        // Update EmployeePersonal table
+                        string personalSql = $@"
+                    UPDATE [{_schemaName}].[EmployeePersonal]
+                    SET FullName = @FullName,
+                        Gender = @Gender,
+                        DOB = @DOB,
+                        Age = @Age,
+                        Address = @Address,
+                        ContactNo = @ContactNo,
+                        Email = @Email,
+                        ProfileImageUrl = @ProfileImageUrl
+                    WHERE EmployeeId = @EmployeeId";
+
+                        using (SqlCommand cmd = new SqlCommand(personalSql, conn, tx))
                         {
-                            cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", personal.EmployeeId);
                             cmd.Parameters.AddWithValue("@FullName", personal.FullName);
                             cmd.Parameters.AddWithValue("@Gender", personal.Gender);
                             cmd.Parameters.AddWithValue("@DOB", personal.DOB);
-                            if (personal.Age.HasValue)
-                                cmd.Parameters.AddWithValue("@Age", personal.Age.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Age", DBNull.Value);
-                            if (string.IsNullOrEmpty(personal.Address))
-                                cmd.Parameters.AddWithValue("@Address", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Address", personal.Address);
+                            cmd.Parameters.AddWithValue("@Age", personal.Age.HasValue ? (object)personal.Age.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Address", string.IsNullOrEmpty(personal.Address) ? DBNull.Value : (object)personal.Address);
                             cmd.Parameters.AddWithValue("@ContactNo", personal.ContactNo);
                             cmd.Parameters.AddWithValue("@Email", personal.Email);
-                            if (string.IsNullOrEmpty(personal.ProfileImageUrl))
-                                cmd.Parameters.AddWithValue("@ProfileImageUrl", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@ProfileImageUrl", personal.ProfileImageUrl);
+                            cmd.Parameters.AddWithValue("@ProfileImageUrl", string.IsNullOrEmpty(personal.ProfileImageUrl) ? DBNull.Value : (object)personal.ProfileImageUrl);
+
                             cmd.ExecuteNonQuery();
                         }
 
-                        using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeProfessional.WithSchema(_procSchema), conn, tx))
+                        // Update EmployeeProfessional table
+                        string professionalSql = $@"
+                    UPDATE [{_schemaName}].[EmployeeProfessional]
+                    SET Designation = @Designation,
+                        Department = @Department,
+                        Qualification = @Qualification,
+                        Experience = @Experience,
+                        Skill = @Skill
+                    WHERE EmployeeId = @EmployeeId";
+
+                        using (SqlCommand cmd = new SqlCommand(professionalSql, conn, tx))
                         {
-                            cmd.CommandType = CommandType.StoredProcedure;
                             cmd.Parameters.AddWithValue("@EmployeeId", professional.EmployeeId);
                             cmd.Parameters.AddWithValue("@Designation", professional.Designation);
                             cmd.Parameters.AddWithValue("@Department", professional.Department);
-                            if (string.IsNullOrEmpty(professional.Qualification))
-                                cmd.Parameters.AddWithValue("@Qualification", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Qualification", professional.Qualification);
-                            if (professional.Experience.HasValue)
-                                cmd.Parameters.AddWithValue("@Experience", professional.Experience.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Experience", DBNull.Value);
-                            if (string.IsNullOrEmpty(professional.Skill))
-                                cmd.Parameters.AddWithValue("@Skill", DBNull.Value);
-                            else
-                                cmd.Parameters.AddWithValue("@Skill", professional.Skill);
+                            cmd.Parameters.AddWithValue("@Qualification", string.IsNullOrEmpty(professional.Qualification) ? DBNull.Value : (object)professional.Qualification);
+                            cmd.Parameters.AddWithValue("@Experience", professional.Experience.HasValue ? (object)professional.Experience.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Skill", string.IsNullOrEmpty(professional.Skill) ? DBNull.Value : (object)professional.Skill);
+
                             cmd.ExecuteNonQuery();
                         }
 
@@ -222,28 +232,56 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
         public void DeleteEmployee(int employeeId)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpDeleteEmployee.WithSchema(_procSchema), conn))
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
                 conn.Open();
-                cmd.ExecuteNonQuery();
+                using (SqlTransaction tx = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // Delete EmployeeProfessional first due to FK
+                        string professionalSql = $"DELETE FROM [{_schemaName}].[EmployeeProfessional] WHERE EmployeeId = @EmployeeId";
+                        using (SqlCommand cmd = new SqlCommand(professionalSql, conn, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // Delete EmployeePersonal
+                        string personalSql = $"DELETE FROM [{_schemaName}].[EmployeePersonal] WHERE EmployeeId = @EmployeeId";
+                        using (SqlCommand cmd = new SqlCommand(personalSql, conn, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+                    }
+                    catch
+                    {
+                        tx.Rollback();
+                        throw;
+                    }
+                }
             }
         }
 
         public void UpdateEmployeeImageUrl(int employeeId, string profileImageUrl)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(SQLNamedQueries.SpUpdateEmployeeImageUrl.WithSchema(_procSchema), conn))
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
-                if (string.IsNullOrEmpty(profileImageUrl))
-                    cmd.Parameters.AddWithValue("@ProfileImageUrl", DBNull.Value);
-                else
-                    cmd.Parameters.AddWithValue("@ProfileImageUrl", profileImageUrl);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                string sql = $@"
+                    UPDATE [{_schemaName}].[EmployeePersonal]
+                    SET ProfileImageUrl = @ProfileImageUrl
+                    WHERE EmployeeId = @EmployeeId";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
+                    cmd.Parameters.AddWithValue("@ProfileImageUrl", string.IsNullOrEmpty(profileImageUrl) ? DBNull.Value : (object)profileImageUrl);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }

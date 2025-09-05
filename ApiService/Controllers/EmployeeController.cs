@@ -45,34 +45,47 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Controllers
 
         [HttpPost]
         [RoleAuthorize("Admin")]
-        public IActionResult Create([FromBody] EmployeeUpsertRequest request)
+        public IActionResult Create(
+    [FromBody] EmployeeUpsertRequest request,
+    [FromHeader(Name = "X-Role")] string? xRole = null) // <-- Swagger will show this
         {
             if (request?.Personal == null || request?.Professional == null) return BadRequest();
             _employeeService.AddEmployee(request.Personal, request.Professional);
             return CreatedAtAction(nameof(GetById), new { id = request.Personal.EmployeeId }, null);
         }
 
+
         [HttpPut("{id:int}")]
         [RoleAuthorize("Admin")]
-        public IActionResult Update(int id, [FromBody] EmployeeUpsertRequest request)
+        public IActionResult Update(
+      int id,
+      [FromBody] EmployeeUpsertRequest request,
+      [FromHeader(Name = "X-Role")] string? xRole = null) // <-- Swagger will show this
         {
             if (request?.Personal == null || request?.Professional == null) return BadRequest();
             if (id != request.Personal.EmployeeId || id != request.Professional.EmployeeId) return BadRequest();
+
             _employeeService.UpdateEmployee(request.Personal, request.Professional);
             return NoContent();
         }
 
+
         [HttpDelete("{id:int}")]
         [RoleAuthorize("Admin")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(
+     int id,
+     [FromHeader(Name = "X-Role")] string? xRole = null)
         {
             _employeeService.DeleteEmployee(id);
             return NoContent();
         }
 
-        [HttpPost("{id:int}/image")] 
+        [HttpPost("{id:int}/image")]
         [RoleAuthorize("Admin")]
-        public IActionResult UploadImage(int id, IFormFile file)
+        public IActionResult UploadImage(
+    int id,
+    IFormFile file,
+    [FromHeader(Name = "X-Role")] string? xRole = null)
         {
             if (file == null || file.Length == 0) return BadRequest("File is required");
             var root = _configuration.GetSection("Uploads").GetValue<string>("RootFolder");
@@ -102,7 +115,9 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Controllers
 
         [HttpDelete("{id:int}/image")]
         [RoleAuthorize("Admin")]
-        public IActionResult DeleteImage(int id)
+        public IActionResult DeleteImage(
+       int id,
+       [FromHeader(Name = "X-Role")] string? xRole = null)
         {
             var emp = _employeeService.GetEmployeeById(id);
             if (emp == null) return NotFound();
@@ -250,7 +265,10 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Controllers
         // Profile document endpoints (stored by naming convention: emp_{id}_profiledoc.ext)
         [HttpPost("{id:int}/document")]
         [RoleAuthorize("Admin")]
-        public IActionResult UploadDocument(int id, IFormFile file)
+        public IActionResult UploadDocument(
+      int id,
+      IFormFile file,
+      [FromHeader(Name = "X-Role")] string? xRole = null)
         {
             if (file == null || file.Length == 0) return BadRequest("File is required");
             var root = _configuration.GetSection("Uploads").GetValue<string>("RootFolder");
@@ -281,7 +299,9 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.ApiService.Controllers
 
         [HttpDelete("{id:int}/document")]
         [RoleAuthorize("Admin")]
-        public IActionResult DeleteDocument(int id)
+        public IActionResult DeleteDocument(
+     int id,
+     [FromHeader(Name = "X-Role")] string? xRole = null)
         {
             var root = _configuration.GetSection("Uploads").GetValue<string>("RootFolder");
             if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)) return NoContent();
