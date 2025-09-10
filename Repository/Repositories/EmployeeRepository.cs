@@ -155,6 +155,21 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                 {
                     try
                     {
+                        // Get the next available EmployeeId if not provided or if it's 0
+                        int employeeId = personal.EmployeeId;
+                        if (employeeId <= 0)
+                        {
+                            string maxIdQuery = $"SELECT ISNULL(MAX(EmployeeId), 0) + 1 FROM [{_schemaName}].[EmployeePersonal]";
+                            using (SqlCommand maxCmd = new SqlCommand(maxIdQuery, conn, tx))
+                            {
+                                employeeId = (int)maxCmd.ExecuteScalar();
+                            }
+                        }
+
+                        // Update the EmployeeId in both objects
+                        personal.EmployeeId = employeeId;
+                        professional.EmployeeId = employeeId;
+
                         // Insert into EmployeePersonal table
                         string personalSql = $@"
                     INSERT INTO [{_schemaName}].[EmployeePersonal] 
@@ -180,9 +195,9 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                         // Insert into EmployeeProfessional table
                         string professionalSql = $@"
                     INSERT INTO [{_schemaName}].[EmployeeProfessional] 
-                    (EmployeeId, Designation, Department, Qualification, Experience, Skill)
+                    (EmployeeId, Designation, Department, Qualification, Experience, Skill, UploadDocURL)
                     VALUES
-                    (@EmployeeId, @Designation, @Department, @Qualification, @Experience, @Skill)";
+                    (@EmployeeId, @Designation, @Department, @Qualification, @Experience, @Skill, @UploadDocURL)";
 
                         using (SqlCommand cmd = new SqlCommand(professionalSql, conn, tx))
                         {
@@ -192,6 +207,7 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                             cmd.Parameters.AddWithValue("@Qualification", string.IsNullOrEmpty(professional.Qualification) ? DBNull.Value : (object)professional.Qualification);
                             cmd.Parameters.AddWithValue("@Experience", professional.Experience.HasValue ? (object)professional.Experience.Value : DBNull.Value);
                             cmd.Parameters.AddWithValue("@Skill", string.IsNullOrEmpty(professional.Skill) ? DBNull.Value : (object)professional.Skill);
+                            cmd.Parameters.AddWithValue("@UploadDocURL", string.IsNullOrEmpty(professional.UploadDocURL) ? DBNull.Value : (object)professional.UploadDocURL);
 
                             cmd.ExecuteNonQuery();
                         }
