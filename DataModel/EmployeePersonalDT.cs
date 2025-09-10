@@ -18,6 +18,13 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.DataModel
         public string ContactNo { get; set; }
         public string Email { get; set; }
         public string ProfileImageUrl { get; set; }
+        
+        public string Designation { get; set; }
+        public string Department { get; set; }
+        public string Qualification { get; set; }
+        public decimal? Experience { get; set; }
+        public string Skill { get; set; }
+        public string UploadDocURL { get; set; }
 
     }
 }

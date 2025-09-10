@@ -35,7 +35,13 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Business
                     Address = model.Address,
                     ContactNo = model.ContactNo,
                     Email = model.Email,
-                    ProfileImageUrl = model.ProfileImageUrl
+                    ProfileImageUrl = model.ProfileImageUrl,
+                    Designation = model.Designation,
+                    Department = model.Department,
+                    Qualification = model.Qualification,
+                    Experience = model.Experience,
+                    Skill = model.Skill,
+                    UploadDocURL = model.UploadDocURL
                 });
             }
             return employeeEntities;
@@ -55,7 +61,13 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Business
                 Address = model.Address,
                 ContactNo = model.ContactNo,
                 Email = model.Email,
-                ProfileImageUrl = model.ProfileImageUrl
+                ProfileImageUrl = model.ProfileImageUrl,
+                Designation = model.Designation,
+                Department = model.Department,
+                Qualification = model.Qualification,
+                Experience = model.Experience,
+                Skill = model.Skill,
+                UploadDocURL = model.UploadDocURL
             };
         }
 

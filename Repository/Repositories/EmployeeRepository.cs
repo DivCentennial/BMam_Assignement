@@ -29,7 +29,25 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
             var employees = new List<EmployeePersonalDT>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = $"SELECT EmployeeId, FullName, Gender, DOB, Age, Address, ContactNo, Email, ProfileImageUrl FROM [{_schemaName}].[EmployeePersonal]";
+                string query = $@"
+            SELECT 
+                p.EmployeeId, 
+                p.FullName, 
+                p.Gender, 
+                p.DOB, 
+                p.Age, 
+                p.Address, 
+                p.ContactNo, 
+                p.Email, 
+                p.ProfileImageUrl,
+                pr.Designation,
+                pr.Department,
+                pr.Qualification,
+                pr.Experience,
+                pr.Skill,
+                pr.UploadDocURL
+            FROM [{_schemaName}].[EmployeePersonal] p
+            LEFT JOIN [{_schemaName}].[EmployeeProfessional] pr ON p.EmployeeId = pr.EmployeeId";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -49,7 +67,13 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                                 Address = reader.IsDBNull(5) ? null : reader.GetString(5),
                                 ContactNo = reader.GetString(6),
                                 Email = reader.GetString(7),
-                                ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8)
+                                ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8),
+                                Designation = reader.IsDBNull(9) ? null : reader.GetString(9),
+                                Department = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Qualification = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                Experience = reader.IsDBNull(12) ? (int?)null : (int)reader.GetDecimal(12),
+                                Skill = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                UploadDocURL = reader.IsDBNull(14) ? null : reader.GetString(14)  // Added this
                             });
                         }
                     }
@@ -64,8 +88,27 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                // Direct SQL query instead of stored procedure
-                string sql = $"SELECT * FROM [{_schemaName}].[EmployeePersonal] WHERE EmployeeId = @EmployeeId";
+                // Join with EmployeeProfessional table to get complete employee data
+                string sql = $@"
+                    SELECT 
+                        p.EmployeeId, 
+                        p.FullName, 
+                        p.Gender, 
+                        p.DOB, 
+                        p.Age, 
+                        p.Address, 
+                        p.ContactNo, 
+                        p.Email, 
+                        p.ProfileImageUrl,
+                        pr.Designation,
+                        pr.Department,
+                        pr.Qualification,
+                        pr.Experience,
+                        pr.Skill,
+                        pr.UploadDocURL
+                    FROM [{_schemaName}].[EmployeePersonal] p
+                    LEFT JOIN [{_schemaName}].[EmployeeProfessional] pr ON p.EmployeeId = pr.EmployeeId
+                    WHERE p.EmployeeId = @EmployeeId";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
@@ -78,15 +121,21 @@ namespace MariApps.MS.Training.MSA.EmployeeMS.Repository.Repositories
                         {
                             return new EmployeePersonalDT
                             {
-                                EmployeeId = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
-                                FullName = reader.GetString(reader.GetOrdinal("FullName")),
-                                Gender = reader.GetString(reader.GetOrdinal("Gender"))[0],
-                                DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
-                                Age = reader.IsDBNull(reader.GetOrdinal("Age")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("Age")),
-                                Address = reader.IsDBNull(reader.GetOrdinal("Address")) ? null : reader.GetString(reader.GetOrdinal("Address")),
-                                ContactNo = reader.GetString(reader.GetOrdinal("ContactNo")),
-                                Email = reader.GetString(reader.GetOrdinal("Email")),
-                                ProfileImageUrl = reader.IsDBNull(reader.GetOrdinal("ProfileImageUrl")) ? null : reader.GetString(reader.GetOrdinal("ProfileImageUrl"))
+                                EmployeeId = reader.GetInt32(0),
+                                FullName = reader.GetString(1),
+                                Gender = reader.GetString(2)[0],
+                                DOB = reader.GetDateTime(3),
+                                Age = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
+                                Address = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                ContactNo = reader.GetString(6),
+                                Email = reader.GetString(7),
+                                ProfileImageUrl = reader.IsDBNull(8) ? null : reader.GetString(8),
+                                Designation = reader.IsDBNull(9) ? null : reader.GetString(9),
+                                Department = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                Qualification = reader.IsDBNull(11) ? null : reader.GetString(11),
+                                Experience = reader.IsDBNull(12) ? (decimal?)null : reader.GetDecimal(12),
+                                Skill = reader.IsDBNull(13) ? null : reader.GetString(13),
+                                UploadDocURL = reader.IsDBNull(14) ? null : reader.GetString(14)
                             };
                         }
                     }
